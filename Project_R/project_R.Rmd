@@ -1,0 +1,679 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Rongjun Bai's project sharing
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+#加载所需的packages
+
+library(dplyr)
+library(alr3)
+library(tidyr)
+library(reshape2)
+library(ggplot2)
+library(scales)
+library(GGally)
+library(knitr)
+library(gridExtra)
+library(memisc)
+library(RColorBrewer)
+
+```
+
+```{r echo=FALSE, Load_the_Data}
+wq <- read.csv("wineQualityReds.csv")  # 加载数据集
+wq <- subset(wq, select = -c(X))   #由于X变量与此次分析无关，所以这里删除X
+```
+
+# 单变量绘图选择  
+##### 本数据集探讨红酒质量与固定酸度、挥发性酸度等化学成分之间的关系，一共包含大约1599瓶红酒及其12个变量。
+```{r echo=FALSE}
+str(wq)
+```
+
+```{r echo=FALSE}
+summary(wq) # 对数据集进行摘要统计
+```
+##### 我们的数据集由12 个变量组成，具有1599 个观测值
+
+
+
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = quality), data = wq) +
+  geom_histogram(binwidth = .5) + #指定绘图类型：直方图
+  scale_x_continuous(breaks = 3:8) #设置X轴区间
+```
+    
+##### 通过对红酒质量分数进行可视化，我们可以看出得分范围为3-8，其中得分为5的红酒数量最多，其次是得分为6，7的红酒，得分为3分的红酒数量最少。我想知道得分较高的红酒都有哪些特征？   
+
+
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = fixed.acidity), data = wq) +
+  geom_histogram(binwidth = .1) + 
+  scale_x_continuous(limits = c(4, 16), #限制X轴范围
+                     breaks = seq(4, 16, .5))
+```
+   
+##### 大部分红酒固定酸度(酒石酸 -  g / dm ^ 3）在6.5 - 8.5 之间，最低酸度为4.60， 最高酸度为15.90.   
+
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = volatile.acidity), data = wq) +
+  geom_histogram(binwidth = .01) + #指定绘图类型，并设定组宽
+  scale_x_continuous(limits = c(0 , 1.6), 
+                     breaks = seq(0, 1.6, 0.2))
+  
+```
+   
+##### 挥发性酸度（乙酸 -  g / dm ^ 3）最大值为1.5800，最小值为0.1200，大部分挥发性酸度处于
+##### 0.2-0.7之间。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = citric.acid), data = wq) +
+  geom_histogram(binwidth = .01) +
+  scale_x_continuous(limits = c(0 , 1), 
+                     breaks = seq(0, 1, 0.1))
+
+```
+   
+##### 柠檬酸（g / dm ^ 3）最大值为1，最小值为0，柠檬酸接近0.5左右的红酒数量最多。数据存在柠檬酸含量为0的情况，我认为此处应为异常值，这里有待后续进一步研究。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = residual.sugar), data = wq) +
+  geom_histogram(binwidth = .1) +
+  scale_x_continuous(limits = c(0 , 16), 
+                     breaks = seq(0, 16, 1))
+
+```
+   
+##### 放大处理  
+
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = residual.sugar), data = wq) +
+  geom_histogram(binwidth = .1) +
+  scale_x_continuous(limits = c(1 , 5), 
+                     breaks = seq(1, 5, 1))
+```
+   
+##### 残糖（g / dm ^ 3）最大值为15.5， 最小值为0.9，大部分红酒残糖水平处于1.5-3.0之间，这里最大
+##### 值达到15.5, 而且残糖水平从7之后的红酒数量都很少，这里我比较感兴趣残糖水平是否越高，最后的质量评分就越高？
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = chlorides), data = wq) +
+  geom_histogram(binwidth = .005) +
+  scale_x_continuous(limits = c(0, 0.62), 
+                     breaks = seq(0, 0.62, .1))
+```
+   
+##### 异常值处理，放大图像
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = chlorides), data = wq) +
+  geom_histogram(binwidth = .005) +
+  scale_x_continuous(limits = c(0, 0.15), 
+                     breaks = seq(0, 0.15, .05))
+```
+   
+##### 氯化物（氯化钠 -  g / dm ^ 3）氯化物最大值0.611,最小值0.012，氯化物水平集中在0.03-0.12之间。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = free.sulfur.dioxide), data = wq) +
+  geom_histogram(binwidth = .5) +
+  scale_x_continuous(limits = c(1, 72), 
+                     breaks = seq(1, 72, 5))
+```
+   
+##### 放大图像
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = free.sulfur.dioxide), data = wq) +
+  geom_histogram(binwidth = 1) +
+  scale_x_continuous(limits = c(1, 35), 
+                     breaks = seq(1, 35, 2))
+```
+   
+##### 游离二氧化硫（mg / dm ^ 3）最大值为72，最小值为1，游离二氧化硫水平在为6左右时，红酒数量
+##### 到达峰值
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = total.sulfur.dioxide), data = wq) +
+  geom_histogram(binwidth = 1) +
+  scale_x_continuous(limits = c(6, 289), 
+                     breaks = seq(6, 289, 10))
+```
+   
+##### 通过上图我们看到二氧化硫（mg / dm ^ 3）的图像呈长尾形，且最大值远远大于其他值，所以这里
+##### 怀疑其为异常值，真实性有待后续进一步研究。接着进一步对x轴进行优化。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = total.sulfur.dioxide), data = wq) +
+  geom_histogram(binwidth = 2) +
+  scale_x_continuous(limits = c(6, 170), 
+                     breaks = seq(6, 170, 5))
+```
+   
+##### 上图为移除疑似异常值后得到的二氧化硫总量图像。可以看出总二氧化硫水平集中在6- 50（mg / dm ^ 3）之间。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = density), data = wq) +
+  geom_histogram(binwidth = .0001) +
+  scale_x_continuous(limits = c(0.99007, 1.00400), 
+                     breaks = seq(0.99007, 1.00400, .002))
+```
+   
+##### 密度（g / cm ^ 3）最大值为1.0037， 最小值为0.9901， 因为红酒中主要成分为水，故红酒密度
+##### 在1左右。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = pH), data = wq) +
+  geom_histogram(binwidth = .01) +
+  scale_x_continuous(limits = c(2.74, 4.01), 
+                     breaks = seq(2.74, 4.01, .1))
+```
+   
+##### PH含量最大值为4.01， 最小值为2.740。大多数红酒PH范围在3.14- 3.5之间。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = sulphates), data = wq) +
+  geom_histogram(binwidth = .01) +
+  scale_x_continuous(limits = c(0.33, 2.00), 
+                     breaks = seq(0.33, 2.00, .1))
+```
+   
+##### 放大图像
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = sulphates), data = wq) +
+  geom_histogram(binwidth = .01) +
+  scale_x_continuous(limits = c(0.33, 1),
+                     breaks = seq(0.33, 1, .1))
+```
+   
+##### 硫酸盐（硫酸钾 -  g / dm3）最大值为2，最低值为0.33，多数红酒硫酸盐水平处于0.43-0.83之间。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = alcohol), data = wq) +
+  geom_histogram(binwidth = .1) +
+  scale_x_continuous(limits = c(8.4, 14.9), 
+                     breaks = seq(8.4, 14.9, .5))
+```
+   
+##### 酒精（体积％）最大值为14.90， 最小值为8.4， 多数红酒酒精处于9.9-11之间。
+   
+
+##### 挥发性酸度含量过高，会产生令人不愉悦的气味，所以我想对挥发性酸度与挥发性酸度，固定酸度之和之间的比率进一步探究。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+#定义挥发性酸度比率并设置结果保留4位小数
+wq$ratio_volatile.acidity <- round(wq$volatile.acidity / 
+                                  (wq$volatile.acidity + wq$fixed.acidity), 4)
+
+ggplot(aes(x = ratio_volatile.acidity), data = wq) +
+  geom_histogram(binwidth = .001) +
+  scale_x_continuous(breaks = seq(0.0130, 0.1730, 0.01))
+```
+   
+##### 从图中我们可以看见大部分红酒的挥发性酸度占比在0.02-0.09之间
+
+
+
+# 单变量分析
+
+### 你的数据集结构是什么？
+
+#####数据集共有1599瓶红酒，有12个特征（固定酸度，挥发性酸度，柠檬酸，残糖等）。
+##### 其他：
+##### 1. PH中位数为3.31
+##### 2. 质量评分平均为5.636分
+##### 3. 大多数红酒评分在5分以上
+
+### 你的数据集内感兴趣的主要特性有哪些？
+
+##### 我想确定哪些因素会影响最终的质量评分，我怀疑评分会与其中某些特征的组合可以用来建立一个
+##### 预测模型预测红酒质量评分。
+
+### 你认为数据集内哪些其他特征可以帮助你探索兴趣特点？
+
+##### 挥发性酸度，残糖，PH，酒精可能会对质量评分影响较大
+
+### 根据数据集内已有变量，你是否创建了任何新变量？
+
+##### 我用挥发性酸度与挥发性酸度，固定酸度之和之间的比率创建了ratio_volatile.acidity，我想探究挥发性酸度对质量评分的影响。
+
+### 在已经探究的特性中，是否存在任何异常分布？你是否对数据进行一些操作，如清洁、调整或改变数据的形式？如果是，你为什么会这样做？
+
+##### 在对数据进行汇总时，发现柠檬酸含量最小值为0的异常情况，怀疑是数据录入错误或者确实数据的情况；总二氧化硫含量最大值为289，远远大于其他值，怀疑是错误数据，最终在图像上进行了相应的变化。增加了ratio_volatile.acidity变量数据，其余没有对数据进行进一步处理，因为对其中疑似异常值的数据不了解其原因。
+
+*****
+
+# 双变量绘图选择
+
+##### 计算各变量相关系数
+```{r echo=FALSE, message=FALSE,, warning=FALSE }
+# 计算各变量之间相关系数
+cor(wq)
+```
+
+   
+##### 建立散点图矩阵
+```{r echo=FALSE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
+theme_set(theme_minimal(10))  #设置主题
+ggpairs(wq) # 建立散点图矩阵
+        
+```
+   
+##### 从散点图矩阵中我们可以看出质量评分似乎与酒精相关性较大，质量与固定酸度也有一定的相关性。此外新创建的变量（ratio_volatile.acidity）似乎与评分没有太大相关性。
+
+
+
+##### 酒精与质量评分
+
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = quality, y = alcohol), data = wq) +
+  geom_jitter(alpha = .5) #将散点图设置为抖动散点图
+```
+   
+##### 经过数据抖动处理，发现酒精与质量评分有一定的关系，随着质量评分的增高，酒精含量也有所升高。因为质量评分是分类变量，所以我们可以用箱线图进一步来探究它们之间的关系。
+   
+   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df <- data.frame(x = as.factor(wq$quality), y = wq$alcohol) # 将quality因子化
+
+ggplot(aes(x = as.factor(quality), y = alcohol), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21) + #设置箱线图形状、大小
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") + #添加平均值图层
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df) # 添加回归线
+
+```
+
+   
+##### 图中红点表示酒精含量平均值。从箱线图我们可以看出随着红酒质量评分的增加，酒精含量也逐渐上升，表明质量与酒精含量有较强相关性。这里让我不明白的事在质量为5时，酒精含量平均值低于评分为3，4的平均数。
+   
+##### 质量与固定酸度
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df1 <- data.frame(x = as.factor(wq$quality), y = wq$fixed.acidity)
+
+ggplot(aes(x = as.factor(quality), y = fixed.acidity), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21) +
+      scale_y_continuous(limits = c(4, 12)) + # 对y轴进行限制
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df1)
+```
+
+##### 箱线图中红点表示固定酸度平均值，随着质量的增加，红酒的固定酸度有小幅升高，从拟合的回归线来看，质量与固定酸度也有一定的相关性。
+   
+##### 分别计算质量与酒精和固定酸度的相关系数
+```{r}
+#分别计算质量与酒精和固定酸度的相关系数
+cor.test(wq$quality, wq$alcohol)
+cor.test(wq$quality, wq$fixed.acidity)
+
+```
+   
+##### 由相关系数结果来看，质量与固定酸度相关度没有质量与酒精含量相关度高。
+   
+##### 质量与挥发性酸度
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df2 <- data.frame(x = as.factor(wq$quality), y = wq$volatile.acidity)
+
+ggplot(aes(x = as.factor(quality), y = volatile.acidity), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21, ylim = c(0,2.5)) +
+      scale_y_continuous(limits = c(0, 1.2)) +
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df2)
+```
+   
+##### 箱线图中红点表示挥发性酸度的平均值，由图我们可以得知，质量与挥发性酸度成反比。
+   
+##### 质量与柠檬酸
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df3 <- data.frame(x = as.factor(wq$quality), y = wq$citric.acid)
+
+ggplot(aes(x = as.factor(quality), y = citric.acid), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21) +
+      scale_y_continuous(limits = c(0, 1)) +
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df3)
+```
+
+##### 上图中红点表示柠檬酸平均值，由图我们可以得知质量与柠檬酸含量成正比。
+   
+##### 质量与硫酸盐
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df4 <- data.frame(x = as.factor(wq$quality), y = wq$sulphates)
+
+ggplot(aes(x = as.factor(quality), y = sulphates), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21) +
+  scale_y_continuous(limits = c(0.25, 1.25)) +
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df4)
+```
+   
+   
+##### 上图中红点代表硫酸盐含量平均值，由图可知质量与硫酸盐含量成正比。
+   
+##### 建立线性回归模型
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+# 对quality、volatile.acidity建立线性回归模型
+m1 <- lm(I(quality) ~ I(alcohol), data = wq)
+m2 <- update(m1, ~. + alcohol)
+m3 <- update(m2, ~. + volatile.acidity)
+m4 <- update(m3, ~. + citric.acid)
+m5 <- update(m4, ~. + sulphates)
+m6 <- update(m4, ~. + fixed.acidity)
+mtable(m1,m2,m3,m4,m5,m6)
+```
+   
+##### 对红酒质量与固定酸度，挥发性酸度等5个特征变量建立模型。从上图我们可以看出线性模型拟合度不是很高，红酒质量的线性模型有待进一步探究。
+   
+##### 挥发性酸度与酒精
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = volatile.acidity, y = alcohol), data = wq) +
+  geom_point(alpha = .5) + #指定绘图类型：散点图，并设置透明度
+  geom_smooth(method = "lm") # 添加平滑曲线
+  
+```
+   
+   
+##### 从上图我们可以观察到挥发性酸度与酒精成反比关系。
+      
+##### 柠檬酸与酒精 
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = citric.acid, y = alcohol), data = wq) +
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm")
+  
+```
+  
+  
+##### 从上图我们可以看出，随着柠檬酸含量的增加，酒精含量也在逐渐上升，但是上升幅度较小，两者有一定的正相关关系。
+   
+##### pH与酒精   
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = pH, y = alcohol), data = wq) +
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm")
+  
+```
+   
+   
+##### 由上图我们可以看出pH与酒精含量有正相关关系。
+   
+##### pH与柠檬酸
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = pH, y = citric.acid), data = wq) +
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm")
+  
+```
+   
+   
+##### 由上图我们可以看出pH与柠檬酸有反比关系，随着ph增大，柠檬酸含量水平逐渐下降。
+   
+##### pH与固定酸度
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+ggplot(aes(x = pH, y = fixed.acidity), data = wq) +
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm")
+  
+```
+    
+    
+##### 从上图中我们可以看出ph与固定酸度成很强的反比关系。
+   
+##### 计算质量与挥发性酸度比率
+```{r}
+cor.test(wq$quality, wq$ratio_volatile.acidity) #计算质量与挥发性酸度比率
+```
+   
+##### 通过计算质量与挥发性酸度比率我们可以看出两者有一定的负相关关系。
+
+
+
+-----
+
+
+# 双变量分析
+
+### 探讨你在这部分探究中观察到的一些关系。这些感兴趣的特性与数据集内其他特性有什么区别？
+   
+##### 通过观察，我发现质量与酒精、柠檬酸、固定酸度、硫酸盐有正相关关系，其中与酒精有很强的正相关关系；质量与挥发性酸度有很强负相关关系，我自定义的变量挥发性酸度比率也与质量存在负相关关系，这与我开始的预测一致。
+
+### 你是否观察到主要特性与其他特性之间的有趣关系？
+   
+##### 随着酒精含量水平的升高，挥发性酸度逐渐呈下降趋势，挥发性酸度含量过高会产生令人不愉悦的气味，而质量较高的红酒酒精含量普遍较高，所以这里我猜测挥发性酸度与酒精含量可能对质量的评定有很大的影响。
+
+### 你发现最强的关系是什么？
+
+##### 我发现的最强关系是固定酸度与pH之间的关系，他们之间存在很强的正相关关系，相关系数为 -0.683。
+
+
+# 多变量绘图选择
+   
+##### 挥发性酸度、酒精与质量
+```{r echo=FALSE}
+
+ggplot(aes(x = volatile.acidity, y = alcohol, color = factor(quality)), 
+       data = wq) +
+  geom_point()+
+  scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) + #设置分类变量渐变颜色
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) + #添加回归线
+  theme_dark() # 添加背景主题
+
+```
+   
+##### 从上图我们可以看到，当酒精含量较低时，无论挥发性酸度怎么变化，质量都没有太大变化，当挥发性酸度含量较高时，酒的质量也不会太高，只有两者在一定的区间内，酒的质量才会比较好。
+   
+   
+##### 柠檬酸、酒精与质量   
+```{r echo=FALSE}
+ggplot(aes(x = citric.acid, y = alcohol, color = factor(quality)), data = wq) +
+  geom_point()+
+  scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  theme_dark()
+
+```
+    
+##### 从上图中我们可以看出评分为4、5、6、7的红酒不论酒精与柠檬酸含量如何变化，质量都没有太大变化，得分最低和最高的红酒质量会随着酒精度的降低和柠檬酸的升高而升高。
+   
+   
+##### pH、酒精与质量    
+```{r echo=FALSE}
+ggplot(aes(x = pH, y = alcohol, color = factor(quality)), data = wq) +
+  geom_point()+
+  scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  theme_dark()
+
+
+``` 
+
+###### 从上图中我们发现所有红酒的质量随着酒精含量与pH的增加也随之增加，但是得分最低和最高的红酒质量增长趋势比其他酒要更快。
+
+   
+##### pH、固定酸度与质量   
+```{r echo=FALSE}
+ggplot(aes(x = pH, y = fixed.acidity, color = factor(quality)), data = wq) +
+  geom_point()+
+  scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  theme_dark()
+
+```
+   
+##### 由上图我们可以看出随着pH的增加，各评分酒中固定酸度与质量之间的变化趋势基本相似，没有太大差异。
+   
+   
+##### pH、柠檬酸与质量
+```{r echo=FALSE}
+ggplot(aes(x = pH, y = volatile.acidity, color = factor(quality)), data = wq) +
+  geom_point()+
+   scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) + # 添加颜色渐变
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  theme_dark() 
+```
+   
+##### 由上图可以看出pH含量和柠檬酸过低或过高时，酒的质量都成上升趋势，让我感到意外的是质量评分最低的红酒增长趋势更快。
+
+
+# 多变量分析
+
+###  探讨你在这部分探究中观察到的一些关系。通过观察感兴趣的特性，是否存在相互促进的特性？
+   
+##### 1. 当酒精含量较低时，无论挥发性酸度怎么变化，质量都没有太大变化，当挥发性酸度含量较高时，酒的质量也不会太高，只有两者在一定的区间内，酒的质量才会比较好。   
+##### 2. 得分最低和最高的红酒在酒精与柠檬酸中变化趋势大致形同，酒精与pH中也出现了相同的情况。这里我猜测酒精与柠檬酸有相互促进的特性。
+##### 3.pH含量和柠檬酸过低或过高时，酒的质量都成上升趋势，让我感到意外的是质量评分最低的红酒增长趋势更快。
+
+
+
+### 这些特性之间是否存在有趣或惊人的联系呢？
+   
+##### 查阅资料我了解到酸度是衡量葡萄酒很重要的一个指标，酸度给葡萄酒增添了活力与清爽之感。它能使得葡萄酒的风味更加突出,高酸度有助于二氧化硫的保鲜作用,大多数菌类无法在这么恶劣的环境里生存。通过以上观察，我发现pH与酒精有很强的促进关系，我猜想这也是能够就是为什么酒越放越陈，越陈越好喝。
+
+### 选项：你是否创建过数据集的任何模型？讨论你模型的优缺点。
+   
+##### 我尝试创建一个模型，但从结果来看不是很理想，我猜测可能是由于初期对于影响质量评分的特征有点凭借自己的感觉，并没有经过一定验证，再者我认为有一些可能会影响质量的一些条件数据集中没有提到，如时间，葡萄酒产地等。
+   
+   
+------
+
+# 定稿图与总结
+
+### pH、柠檬酸与质量
+```{r echo=FALSE}
+ggplot(aes(x = pH, y = volatile.acidity, color = factor(quality)), data = wq) +
+  geom_point()+
+   scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) + # 添加颜色渐变
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+   labs(title = "Relationship between pH ,citric.acid and quality",
+       x = "PH", y = "Volatile acidity / (g / dm^3)")+ # 添加标题，图例，x，y轴名称
+  theme_dark() +
+  theme(plot.title = element_text(hjust = 0.5)) # 居中图像标题
+
+
+```
+
+### 描述一
+   
+##### 挥发性酸度较低的红酒，质量相对较好；挥发性酸度较高的红酒，质量相对较差。质量较好的红酒有较低的pH值和挥发性酸度。
+
+### 质量与酒精、挥发性酸度
+```{r echo=FALSE, message=FALSE,, warning=FALSE}
+df <- data.frame(x = as.factor(wq$quality), y = wq$alcohol)
+
+ggplot(aes(x = as.factor(quality), y = alcohol), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21) +
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +# 添加摘要统计层
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df) +
+  labs(title = "The relationship between quality and alcohol", x = "Quality", 
+       y = "Alcohol / (% by volume)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+```{r echo=FALSE, message=FALSE,warning=FALSE}
+df2 <- data.frame(x = as.factor(wq$quality), y = wq$volatile.acidity)   
+
+ggplot(aes(x = as.factor(quality), y = volatile.acidity), data = wq) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21, ylim = c(0,2.5)) +
+      scale_y_continuous(limits = c(0, 1.2)) +
+   stat_summary(fun.y = "mean", geom = "point", shape = 23, fill = "red") +
+  geom_smooth(method = "lm", se=TRUE, formula=y~as.numeric(x),
+              aes(x=as.numeric(x), y=y),data = df2)+
+  labs(title = "The relationship between quality and volatile acidity",
+       x = "Quality", y = "Volatile acidity / (g / dm^3)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+   
+### 描述二
+   
+##### 高评分红酒中酒精含量较高，挥发性酸度较低；相反，低评分酒中酒精含量较低，挥发性酸度较高。
+
+### 酒精、pH和质量
+```{r echo=FALSE}
+ggplot(aes(x = pH, y = alcohol, color = factor(quality)), data = wq) +
+  geom_point()+
+  scale_color_brewer(type = 'div',
+    guide = guide_legend(title = 'Quality', reverse = T,
+    override.aes = list(alpha = 1, size = 2))) + #添加颜色渐变
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  labs(title = "Relationship between quality, ph and alcohol", 
+       x = "PH", y = "Alcohol / (% by volume)") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_rect(fill = "grey40"))
+
+
+```
+
+### 描述三
+   
+##### 从图中我们可以看出酒精含量高的葡萄酒，质量相对高些;同样：酒精含量低的葡萄酒，质量也相对偏低; pH值值与酒精含量和葡萄酒质量之间的关系并不十分明显。这里我猜想专家在对红酒进行质量评分时，是对红酒的各项指标进行综合评分，某一项特别突出或者差强人意都不会对最终评分造成太大影响，这也说明了专家在对红酒进行质量评分是还是比较客观的。但我认为红酒的质量要从多方面去进行，不仅是对其化学成分层面，感官测评也很重要，接下来希望能有更多的特征能够加入，争取获得更有说服力的分析结果。
+
+
+-----
+
+# 反思
+   
+##### 在做项目中遇到的最大困难就是在箱线图中添加回归线，通过Google查找资料，优达论坛等一步步尝试，最终完成了回归线的添加，我认为我获得的成功就是在自己的努力下，独立的完成了R项目。在对项目数据进行单变量可视化分析时发现存在异常值的现象，我就对图像进行放大处理来处理异常值，这让我更好的观察到一些变量的分布情况。
+##### 在今后的数据分析的过程中，我会继续保持一颗上进的心，不断提高对数据的敏感度，加入更多的可视化图表来表现变量之间的关系，注意作图细节，完善分析框架，进一步丰富分析内容和提高报告质量！Keep Learning and Stay Udacious!
+
+
+
+
+
+
+###  注意：本项目所引用数据集信息如下
+#####  P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. 
+#####  Modeling wine preferences by data mining from physicochemical properties.
+#####  In Decision Support Systems, Elsevier, 47(4):547-553. ISSN: 0167-9236.
+
+#####  Available at: [@Elsevier] http://dx.doi.org/10.1016/j.dss.2009.05.016
+#####  [Pre-press (pdf)] http://www3.dsi.uminho.pt/pcortez/winequality09.pdf
+#####  [bib] http://www3.dsi.uminho.pt/pcortez/dss09.bib
